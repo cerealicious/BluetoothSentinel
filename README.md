@@ -28,7 +28,7 @@ Developed by me, **cerealicious**, this tool acts as a "watchdog" for your Bluet
 ### Building from Source
 If you prefer to build the application yourself:
 ```bash
-git clone https://github.com/your-username/bluetooth-sentinel.git
+git clone https://github.com/cerealicious/BluetoothSentinel.git
 cd bluetooth-sentinel
 dotnet restore
 dotnet publish -c Release -r win-x64 --self-contained true
