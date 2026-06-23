@@ -96,7 +96,7 @@ namespace BluetoothSentinel
 
         private void ShowAbout_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Bluetooth Sentinel v1.0\n\nDeveloper: Ce\nLocation: Scarborough, Toronto\n\nPurpose: Manage Bluetooth auto-connect preferences.", "About");
+            MessageBox.Show("Bluetooth Sentinel v1.0\n\nDeveloper: cerealicious\n\nPurpose: Manage Bluetooth auto-connect preferences.", "About");
         }
 
         private void Disconnect_Click(object sender, RoutedEventArgs e)
