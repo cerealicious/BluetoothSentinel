@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
+using System.Windows.Controls; // Required for Button and CheckBox
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using Newtonsoft.Json;
@@ -22,7 +22,9 @@ namespace BluetoothSentinel
             InitializeComponent();
             DeviceList.ItemsSource = _devices;
             LoadSettings();
-            RefreshDevices();
+            
+            // Fire and forget for initial load to keep UI responsive
+            _ = RefreshDevices();
         }
 
         private async void RefreshDevices_Click(object sender, RoutedEventArgs e) => await RefreshDevices();
@@ -91,6 +93,7 @@ namespace BluetoothSentinel
                     var item = _devices.FirstOrDefault(d => d.Id == s.DeviceId);
                     if (item != null && !item.AutoConnect)
                     {
+                        // In .NET 8 WinRT, use Dispose() instead of Close()
                         s.Dispose();
                     }
                 }
@@ -112,7 +115,7 @@ namespace BluetoothSentinel
         private void ShowAbout_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show(
-                "Bluetooth Sentinel v1.0\n\nDeveloper: cerealicious\n\nPurpose: Manage Bluetooth auto-connect preferences.",
+                "Bluetooth Sentinel v1.0\n\nDeveloper: cerealicious\nLocation: Scarborough, Toronto\n\nPurpose: Manage Bluetooth auto-connect preferences.",
                 "About", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
