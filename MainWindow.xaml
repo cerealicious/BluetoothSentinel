@@ -44,6 +44,6 @@
             </ListView.View>
         </ListView>
 
-        <TextBlock Grid.Row="2" Text="Managed by cerealicious" HorizontalAlignment="Right" Foreground="Gray"/>
+        <TextBlock Grid.Row="2" Text="Managed by Cerealcious | Toronto" HorizontalAlignment="Right" Foreground="Gray"/>
     </Grid>
 </Window>
