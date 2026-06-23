@@ -33,22 +33,31 @@ namespace BluetoothSentinel
 
             foreach (var info in deviceInfos)
             {
-                var btDevice = await BluetoothDevice.FromIdAsync(info.Id);
-                var settings = LoadDeviceSetting(info.Id);
-                
-                _devices.Add(new DeviceItem
+                try 
                 {
-                    Id = info.Id,
-                    Name = info.Name,
-                    IsConnected = btDevice.ConnectionStatus == BluetoothConnectionStatus.Connected,
-                    AutoConnect = settings.AutoConnect,
-                    DeviceRef = btDevice
-                });
+                    var btDevice = await BluetoothDevice.FromIdAsync(info.Id);
+                    if (btDevice == null) continue;
 
-                // Start monitoring if auto-connect is disabled
-                if (!settings.AutoConnect)
+                    var settings = LoadDeviceSetting(info.Id);
+                    
+                    _devices.Add(new DeviceItem
+                    {
+                        Id = info.Id,
+                        Name = info.Name,
+                        IsConnected = btDevice.ConnectionStatus == BluetoothConnectionStatus.Connected,
+                        AutoConnect = settings.AutoConnect,
+                        DeviceRef = btDevice
+                    });
+
+                    if (!settings.AutoConnect)
+                    {
+                        MonitorDevice(btDevice);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    MonitorDevice(btDevice);
+                    // Skip devices that fail to initialize
+                    System.Diagnostics.Debug.WriteLine($"Failed to load device {info.Name}: {ex.Message}");
                 }
             }
         }
@@ -58,7 +67,10 @@ namespace BluetoothSentinel
             if (sender is CheckBox cb && cb.DataContext is DeviceItem device)
             {
                 SaveDeviceSetting(device.Id, device.AutoConnect);
-                if (!device.AutoConnect) MonitorDevice(device.DeviceRef);
+                if (!device.AutoConnect && device.DeviceRef != null) 
+                {
+                    MonitorDevice(device.DeviceRef);
+                }
             }
         }
 
@@ -68,8 +80,8 @@ namespace BluetoothSentinel
             {
                 if (s.ConnectionStatus == BluetoothConnectionStatus.Connected)
                 {
-                    // If auto-connect is off, force disconnect
-                    if (!_devices.FirstOrDefault(d => d.Id == s.DeviceId)?.AutoConnect ?? true)
+                    var item = _devices.FirstOrDefault(d => d.Id == s.DeviceId);
+                    if (item != null && !item.AutoConnect)
                     {
                         s.Close();
                     }
@@ -77,11 +89,8 @@ namespace BluetoothSentinel
             };
         }
 
-        private async void PairDevice_Click(object sender, RoutedEventArgs e)
+        private void PairDevice_Click(object sender, RoutedEventArgs e)
         {
-            var picker = new DevicePicker();
-            // Note: Native pairing UI integration requires more complex WinRT calls. 
-            // For now, this opens the Windows Settings page for Bluetooth.
             System.Diagnostics.Process.Start("ms-settings:bluetooth");
         }
 
@@ -99,7 +108,6 @@ namespace BluetoothSentinel
             }
         }
 
-        // --- Settings Management ---
         private DeviceSetting LoadDeviceSetting(string id)
         {
             if (File.Exists(ConfigFile))
