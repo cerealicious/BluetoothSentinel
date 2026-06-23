@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Bluetooth Sentinel" Height="500" Width="600"
         WindowStartupLocation="CenterScreen"
-        Icon="Assets/app.ico">
+        Icon="pack://application:,,,/assets/app.ico">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -44,6 +44,6 @@
             </ListView.View>
         </ListView>
 
-        <TextBlock Grid.Row="2" Text="Managed by Cerealcious | Toronto" HorizontalAlignment="Right" Foreground="Gray"/>
+        <TextBlock Grid.Row="2" Text="Managed by cerealcious" HorizontalAlignment="Right" Foreground="Gray"/>
     </Grid>
 </Window>

@@ -7,7 +7,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>BluetoothSentinel</AssemblyName>
     <RootNamespace>BluetoothSentinel</RootNamespace>
-    <ApplicationIcon>Assets/app.ico</ApplicationIcon>
+    <ApplicationIcon>assets/app.ico</ApplicationIcon>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <Resource Include="assets/app.ico" />
   </ItemGroup>
 
 </Project>
