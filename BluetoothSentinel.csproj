@@ -10,8 +10,9 @@
     <RootNamespace>BluetoothSentinel</RootNamespace>
     <ApplicationIcon>Assets/app.ico</ApplicationIcon>
     
-    <!-- These two lines are required for Windows App SDK -->
+    <!-- Explicitly setting the Target Platform Version resolves the MSB4086 error -->
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <TargetPlatformVersion>10.0.22621.0</TargetPlatformVersion>
     <SupportedOSPlatformVersion>10.0.22621.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
