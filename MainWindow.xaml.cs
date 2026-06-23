@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls; // Required for Button and CheckBox
+using System.Windows.Controls;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using Newtonsoft.Json;
@@ -22,8 +22,6 @@ namespace BluetoothSentinel
             InitializeComponent();
             DeviceList.ItemsSource = _devices;
             LoadSettings();
-            
-            // Fire and forget for initial load to keep UI responsive
             _ = RefreshDevices();
         }
 
@@ -93,7 +91,6 @@ namespace BluetoothSentinel
                     var item = _devices.FirstOrDefault(d => d.Id == s.DeviceId);
                     if (item != null && !item.AutoConnect)
                     {
-                        // In .NET 8 WinRT, use Dispose() instead of Close()
                         s.Dispose();
                     }
                 }
@@ -128,7 +125,6 @@ namespace BluetoothSentinel
             }
         }
 
-        // --- Settings Management ---
         private DeviceSetting LoadDeviceSetting(string id)
         {
             try
@@ -140,7 +136,7 @@ namespace BluetoothSentinel
                     if (dict != null && dict.ContainsKey(id)) return dict[id];
                 }
             }
-            catch { /* Return default on corrupt file */ }
+            catch { }
             return new DeviceSetting { AutoConnect = true };
         }
 
@@ -159,7 +155,7 @@ namespace BluetoothSentinel
             File.WriteAllText(ConfigFile, JsonConvert.SerializeObject(dict, Formatting.Indented));
         }
 
-        private void LoadSettings() { /* Initial load logic if needed */ }
+        private void LoadSettings() { }
     }
 
     public class DeviceItem
