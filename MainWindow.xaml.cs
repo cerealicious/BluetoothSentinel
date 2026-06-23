@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using Newtonsoft.Json;
@@ -12,7 +14,7 @@ namespace BluetoothSentinel
 {
     public partial class MainWindow : Window
     {
-        private ObservableCollection<DeviceItem> _devices = new();
+        private readonly ObservableCollection<DeviceItem> _devices = new();
         private const string ConfigFile = "settings.json";
 
         public MainWindow()
@@ -28,37 +30,43 @@ namespace BluetoothSentinel
         private async Task RefreshDevices()
         {
             _devices.Clear();
-            var selector = BluetoothDevice.GetDeviceSelector();
-            var deviceInfos = await DeviceInformation.FindAllAsync(selector);
-
-            foreach (var info in deviceInfos)
+            try
             {
-                try 
+                var selector = BluetoothDevice.GetDeviceSelectorFromPairingState(true);
+                var deviceInfos = await DeviceInformation.FindAllAsync(selector);
+
+                foreach (var info in deviceInfos)
                 {
-                    var btDevice = await BluetoothDevice.FromIdAsync(info.Id);
-                    if (btDevice == null) continue;
-
-                    var settings = LoadDeviceSetting(info.Id);
-                    
-                    _devices.Add(new DeviceItem
+                    try
                     {
-                        Id = info.Id,
-                        Name = info.Name,
-                        IsConnected = btDevice.ConnectionStatus == BluetoothConnectionStatus.Connected,
-                        AutoConnect = settings.AutoConnect,
-                        DeviceRef = btDevice
-                    });
+                        var btDevice = await BluetoothDevice.FromIdAsync(info.Id);
+                        if (btDevice == null) continue;
 
-                    if (!settings.AutoConnect)
+                        var settings = LoadDeviceSetting(info.Id);
+                        
+                        _devices.Add(new DeviceItem
+                        {
+                            Id = info.Id,
+                            Name = string.IsNullOrEmpty(info.Name) ? "Unknown Device" : info.Name,
+                            IsConnected = btDevice.ConnectionStatus == BluetoothConnectionStatus.Connected,
+                            AutoConnect = settings.AutoConnect,
+                            DeviceRef = btDevice
+                        });
+
+                        if (!settings.AutoConnect)
+                        {
+                            MonitorDevice(btDevice);
+                        }
+                    }
+                    catch (Exception ex)
                     {
-                        MonitorDevice(btDevice);
+                        System.Diagnostics.Debug.WriteLine($"Error loading device {info.Name}: {ex.Message}");
                     }
                 }
-                catch (Exception ex)
-                {
-                    // Skip devices that fail to initialize
-                    System.Diagnostics.Debug.WriteLine($"Failed to load device {info.Name}: {ex.Message}");
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to refresh devices: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -67,7 +75,7 @@ namespace BluetoothSentinel
             if (sender is CheckBox cb && cb.DataContext is DeviceItem device)
             {
                 SaveDeviceSetting(device.Id, device.AutoConnect);
-                if (!device.AutoConnect && device.DeviceRef != null) 
+                if (!device.AutoConnect && device.DeviceRef != null)
                 {
                     MonitorDevice(device.DeviceRef);
                 }
@@ -83,7 +91,7 @@ namespace BluetoothSentinel
                     var item = _devices.FirstOrDefault(d => d.Id == s.DeviceId);
                     if (item != null && !item.AutoConnect)
                     {
-                        s.Close();
+                        s.Dispose();
                     }
                 }
             };
@@ -91,12 +99,21 @@ namespace BluetoothSentinel
 
         private void PairDevice_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Process.Start("ms-settings:bluetooth");
+            try
+            {
+                System.Diagnostics.Process.Start("ms-settings:bluetooth");
+            }
+            catch
+            {
+                MessageBox.Show("Could not open Bluetooth settings.", "Error");
+            }
         }
 
         private void ShowAbout_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Bluetooth Sentinel v1.0\n\nDeveloper: cerealicious\n\nPurpose: Manage Bluetooth auto-connect preferences.", "About");
+            MessageBox.Show(
+                "Bluetooth Sentinel v1.0\n\nDeveloper: cerealicious\n\nPurpose: Manage Bluetooth auto-connect preferences.",
+                "About", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void Disconnect_Click(object sender, RoutedEventArgs e)
@@ -104,27 +121,37 @@ namespace BluetoothSentinel
             if (sender is Button btn && btn.Tag is string id)
             {
                 var device = _devices.FirstOrDefault(d => d.Id == id);
-                device?.DeviceRef?.Close();
+                device?.DeviceRef?.Dispose();
             }
         }
 
+        // --- Settings Management ---
         private DeviceSetting LoadDeviceSetting(string id)
         {
-            if (File.Exists(ConfigFile))
+            try
             {
-                var json = File.ReadAllText(ConfigFile);
-                var dict = JsonConvert.DeserializeObject<Dictionary<string, DeviceSetting>>(json);
-                if (dict != null && dict.ContainsKey(id)) return dict[id];
+                if (File.Exists(ConfigFile))
+                {
+                    var json = File.ReadAllText(ConfigFile);
+                    var dict = JsonConvert.DeserializeObject<Dictionary<string, DeviceSetting>>(json);
+                    if (dict != null && dict.ContainsKey(id)) return dict[id];
+                }
             }
+            catch { /* Return default on corrupt file */ }
             return new DeviceSetting { AutoConnect = true };
         }
 
         private void SaveDeviceSetting(string id, bool autoConnect)
         {
-            Dictionary<string, DeviceSetting> dict = File.Exists(ConfigFile) 
-                ? JsonConvert.DeserializeObject<Dictionary<string, DeviceSetting>>(File.ReadAllText(ConfigFile)) 
-                : new Dictionary<string, DeviceSetting>();
-            
+            Dictionary<string, DeviceSetting> dict;
+            try
+            {
+                dict = File.Exists(ConfigFile)
+                    ? JsonConvert.DeserializeObject<Dictionary<string, DeviceSetting>>(File.ReadAllText(ConfigFile)) ?? new()
+                    : new();
+            }
+            catch { dict = new(); }
+
             dict[id] = new DeviceSetting { AutoConnect = autoConnect };
             File.WriteAllText(ConfigFile, JsonConvert.SerializeObject(dict, Formatting.Indented));
         }
@@ -134,11 +161,11 @@ namespace BluetoothSentinel
 
     public class DeviceItem
     {
-        public string Id { get; set; }
-        public string Name { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         public bool IsConnected { get; set; }
         public bool AutoConnect { get; set; }
-        public BluetoothDevice DeviceRef { get; set; }
+        public BluetoothDevice? DeviceRef { get; set; }
         public string StatusText => IsConnected ? "Connected" : "Disconnected";
         public Visibility CanDisconnect => IsConnected ? Visibility.Visible : Visibility.Collapsed;
     }
