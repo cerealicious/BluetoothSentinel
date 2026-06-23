@@ -1,13 +1,8 @@
-<Application x:Class="BluetoothSentinel.App"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="MainWindow.xaml">
-    <Application.Resources>
-        <ResourceDictionary>
-            <Style TargetType="Button">
-                <Setter Property="Padding" Value="10,5"/>
-                <Setter Property="Margin" Value="5"/>
-            </Style>
-        </ResourceDictionary>
-    </Application.Resources>
-</Application>
+using System.Windows;
+
+namespace BluetoothSentinel
+{
+    public partial class App : Application
+    {
+    }
+}
